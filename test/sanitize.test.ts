@@ -44,4 +44,26 @@ describe('sanitizeForTelegram', () => {
   it('ignora bloques vacios', () => {
     expect(sanitizeForTelegram('```\n```')).toBe('«codigo omitido — 0 lineas»');
   });
+
+  it('no trata triple backtick inline como fence (repro del bug de anclaje)', () => {
+    const input = 'Antes ```x``` despues\n```\ny\n```';
+    const output = sanitizeForTelegram(input);
+    // La línea 'y' no debe escapar sin colapsar — debe estar dentro del marcador
+    expect(output).not.toContain('\ny\n');
+    // Debe haber exactamente una línea de código colapsada (la real con 'y')
+    expect(output).toContain('«codigo omitido — 1 linea»');
+    // El texto inline ``` no debe tratarse como cerca
+    expect(output).toContain('Antes ```x``` despues');
+  });
+
+  it('preserva triple backtick inline seguido de prosa (sin cerrar)', () => {
+    const input = '```x``` despues';
+    expect(sanitizeForTelegram(input)).toBe(input);
+  });
+
+  it('maneja CRLF correctamente en countLines', () => {
+    const input = '```\r\nfoo\r\nbar\r\n```';
+    const output = sanitizeForTelegram(input);
+    expect(output).toContain('2 lineas»');
+  });
 });
