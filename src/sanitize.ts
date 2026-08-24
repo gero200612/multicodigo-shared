@@ -10,8 +10,10 @@ export function sanitizeForTelegram(text: string): string {
   let codeBlockLines: string[] = [];
 
   for (const line of lines) {
-    // A fence is a line starting with ``` with no backticks in the rest (prevents matching inline pairs)
-    const isFence = line.startsWith('```') && !line.slice(3).includes('```');
+    // Check if this line is a fence by looking at the trimmed content (allows indented fences)
+    // but we preserve the original line in output to maintain indentation structure
+    const trimmedLine = line.trim();
+    const isFence = trimmedLine.startsWith('```') && !trimmedLine.slice(3).includes('```');
 
     if (isFence) {
       if (inCodeBlock) {

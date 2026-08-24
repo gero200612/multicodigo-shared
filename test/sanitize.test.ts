@@ -66,4 +66,25 @@ describe('sanitizeForTelegram', () => {
     const output = sanitizeForTelegram(input);
     expect(output).toContain('2 lineas»');
   });
+
+  it('colapsa bloques con fences indentadas (en listas)', () => {
+    const input = '1. Item\n  ```\n  code\n  ```\n2. Next';
+    const output = sanitizeForTelegram(input);
+    // No code line should appear
+    expect(output).not.toContain('code');
+    // Should have exactly one collapsed marker
+    expect((output.match(/«codigo omitido/g) || []).length).toBe(1);
+    // Should preserve list structure
+    expect(output).toContain('1. Item');
+    expect(output).toContain('2. Next');
+  });
+
+  it('colapsa bloques con ambas fences indentadas (anidadas)', () => {
+    const input = '  ```\n  nested code line 1\n  nested code line 2\n  ```';
+    const output = sanitizeForTelegram(input);
+    // No code line should appear
+    expect(output).not.toContain('nested code');
+    // Should have collapsed marker
+    expect(output).toContain('«codigo omitido — 2 lineas»');
+  });
 });
