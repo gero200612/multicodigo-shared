@@ -40,3 +40,93 @@ describe('PromptResponse', () => {
     ).toThrow();
   });
 });
+
+import {
+  ApprovalRequest,
+  ApprovalDecision,
+  PendingApprovalsResponse,
+  GitCommitRequest,
+  GitPushRequest,
+  GitResult,
+  AgentErrorCode,
+} from '../src/contract.js';
+
+describe('ApprovalRequest', () => {
+  const base = {
+    approvalId: '11111111-1111-4111-8111-111111111111',
+    jobId: '22222222-2222-4222-8222-222222222222',
+    agent: 'c1',
+    tool: 'Write',
+    summary: 'Voy a escribir el archivo de lotes.',
+    createdAt: '2026-08-25T12:00:00.000Z',
+    expiresAt: '2026-08-25T12:15:00.000Z',
+  };
+
+  it('acepta una solicitud completa', () => {
+    expect(ApprovalRequest.parse(base).tool).toBe('Write');
+  });
+
+  it('rechaza un approvalId que no es uuid', () => {
+    expect(ApprovalRequest.safeParse({ ...base, approvalId: 'abc' }).success).toBe(false);
+  });
+
+  it('rechaza un resumen vacio: sin resumen no hay nada que aprobar', () => {
+    expect(ApprovalRequest.safeParse({ ...base, summary: '' }).success).toBe(false);
+  });
+
+  it('rechaza un agente que no existe', () => {
+    expect(ApprovalRequest.safeParse({ ...base, agent: 'c9' }).success).toBe(false);
+  });
+});
+
+describe('ApprovalDecision', () => {
+  it('acepta allow sin feedback', () => {
+    expect(ApprovalDecision.parse({ decision: 'allow' }).decision).toBe('allow');
+  });
+
+  it('acepta deny con feedback', () => {
+    const d = ApprovalDecision.parse({ decision: 'deny', feedback: 'usa el otro modulo' });
+    expect(d.feedback).toBe('usa el otro modulo');
+  });
+
+  it('rechaza una decision que no es allow ni deny', () => {
+    expect(ApprovalDecision.safeParse({ decision: 'quizas' }).success).toBe(false);
+  });
+});
+
+describe('PendingApprovalsResponse', () => {
+  it('acepta una lista vacia', () => {
+    expect(PendingApprovalsResponse.parse({ pending: [] }).pending).toEqual([]);
+  });
+});
+
+describe('GitPushRequest', () => {
+  it('acepta un push a una branch del agente', () => {
+    const r = GitPushRequest.parse({ agent: 'c1', project: 'demo', branch: 'claude/c1/lotes' });
+    expect(r.branch).toBe('claude/c1/lotes');
+  });
+
+  it('rechaza una branch vacia', () => {
+    expect(GitPushRequest.safeParse({ agent: 'c1', project: 'demo', branch: '' }).success).toBe(false);
+  });
+});
+
+describe('GitCommitRequest', () => {
+  it('rechaza un mensaje de commit vacio', () => {
+    expect(GitCommitRequest.safeParse({ agent: 'c1', project: 'demo', message: '' }).success).toBe(false);
+  });
+});
+
+describe('GitResult', () => {
+  it('acepta un resultado con salida', () => {
+    expect(GitResult.parse({ ok: true, output: '1 file changed' }).ok).toBe(true);
+  });
+});
+
+describe('AgentErrorCode', () => {
+  it('incluye los codigos nuevos del plan 2', () => {
+    for (const code of ['approval_timeout', 'forbidden_branch', 'git_failed']) {
+      expect(AgentErrorCode.safeParse(code).success).toBe(true);
+    }
+  });
+});
