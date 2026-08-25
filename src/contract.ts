@@ -32,6 +32,11 @@ export const AgentErrorCode = z.enum([
   'approval_timeout',
   'forbidden_branch',
   'git_failed',
+  // Plan 3
+  'run_failed',
+  'run_timeout',
+  'unknown_task',
+  'worktree_dirty',
 ]);
 export type AgentErrorCode = z.infer<typeof AgentErrorCode>;
 
@@ -98,3 +103,29 @@ export const GitResult = z.object({
   output: z.string(),
 });
 export type GitResult = z.infer<typeof GitResult>;
+
+/**
+ * Pedido de ejecucion.
+ *
+ * `tarea` es un NOMBRE, no un comando, y no hay campo de argumentos a
+ * proposito: el comando completo vive en `config/projects.json` y el agente no
+ * puede componer nada. `.strict()` hace que un `args` de mas sea un rechazo y
+ * no un campo ignorado en silencio.
+ */
+export const RunRequest = z
+  .object({
+    agent: AgentId,
+    project: z.string().min(1),
+    tarea: z.string().min(1),
+  })
+  .strict();
+export type RunRequest = z.infer<typeof RunRequest>;
+
+export const RunResponse = z.object({
+  ok: z.boolean(),
+  output: z.string(),
+  exitCode: z.number().int(),
+  /** true si `output` no es la salida completa. */
+  truncado: z.boolean().optional(),
+});
+export type RunResponse = z.infer<typeof RunResponse>;

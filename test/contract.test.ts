@@ -130,3 +130,52 @@ describe('AgentErrorCode', () => {
     }
   });
 });
+
+import { RunRequest, RunResponse } from '../src/contract.js';
+
+describe('RunRequest', () => {
+  const base = { agent: 'c1', project: 'demo', tarea: 'test' };
+
+  it('acepta un pedido de tarea', () => {
+    expect(RunRequest.parse(base).tarea).toBe('test');
+  });
+
+  // El agente manda un NOMBRE, no un comando. Sin argumentos: el comando
+  // completo lo decide config/projects.json.
+  it('rechaza un campo de argumentos: el agente no compone comandos', () => {
+    const r = RunRequest.safeParse({ ...base, args: ['--force'] });
+    expect(r.success && 'args' in r.data).toBe(false);
+  });
+
+  it('rechaza una tarea vacia', () => {
+    expect(RunRequest.safeParse({ ...base, tarea: '' }).success).toBe(false);
+  });
+
+  it('rechaza un agente que no existe', () => {
+    expect(RunRequest.safeParse({ ...base, agent: 'c9' }).success).toBe(false);
+  });
+});
+
+describe('RunResponse', () => {
+  it('acepta un resultado exitoso con salida', () => {
+    const r = RunResponse.parse({ ok: true, output: '12 tests passed', exitCode: 0 });
+    expect(r.ok).toBe(true);
+  });
+
+  it('acepta un fallo con su codigo de salida', () => {
+    expect(RunResponse.parse({ ok: false, output: '1 failed', exitCode: 1 }).exitCode).toBe(1);
+  });
+
+  it('marca cuando la salida se trunco', () => {
+    const r = RunResponse.parse({ ok: true, output: 'x', exitCode: 0, truncado: true });
+    expect(r.truncado).toBe(true);
+  });
+});
+
+describe('AgentErrorCode — plan 3', () => {
+  it('incluye los codigos del runner y del worktree', () => {
+    for (const code of ['run_failed', 'run_timeout', 'unknown_task', 'worktree_dirty']) {
+      expect(AgentErrorCode.safeParse(code).success).toBe(true);
+    }
+  });
+});
