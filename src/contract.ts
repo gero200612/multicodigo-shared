@@ -1,6 +1,24 @@
 import { z } from 'zod';
 
-export const AgentId = z.enum(['c1', 'c2']);
+/**
+ * El identificador de un slot de agente.
+ *
+ * Era `z.enum(['c1','c2'])`. Dejo de ser una lista cerrada porque el pool se
+ * declara en el compose y en el entorno, no en el codigo: sumar un agente no
+ * puede ser un cambio en el paquete compartido.
+ *
+ * Se valida la FORMA, no la existencia. Que el slot exista lo contesta
+ * `loadAgentUrls` en el gateway, que descubre los `AGENT_<ID>_URL` del entorno.
+ *
+ * El regex no es cosmetico. Al abrir el enum se pierde una garantia que daba el
+ * compilador, y esto la repone: el gateway construye `claude/${agent}/` para la
+ * rama y hace `agentUrls[agent]`, asi que un string libre aca seria inyeccion de
+ * path. Ancla a los dos extremos (`^`/`$`) para que no entren saltos de linea
+ * ni espacios al final, prohibe el cero a la izquierda y el slot cero para que
+ * no haya dos strings distintos que signifiquen el mismo slot, y se queda en dos
+ * digitos porque el limite real es la RAM del host, no el nombre.
+ */
+export const AgentId = z.string().regex(/^c[1-9][0-9]?$/, 'slot invalido');
 export type AgentId = z.infer<typeof AgentId>;
 
 export const PromptRequest = z.object({

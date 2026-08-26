@@ -2,13 +2,36 @@ import { describe, it, expect } from 'vitest';
 import { AgentId, PromptRequest, PromptResponse } from '../src/index.js';
 
 describe('AgentId', () => {
-  it('acepta los agentes conocidos', () => {
-    expect(AgentId.parse('c1')).toBe('c1');
-    expect(AgentId.parse('c2')).toBe('c2');
+  // Dejo de ser un enum cerrado: el pool de slots se configura en el compose y
+  // en el entorno, no en el codigo. Se valida la FORMA. Que un slot exista es
+  // otra pregunta, y la contesta el registry del gateway.
+  it('acepta cualquier slot con forma valida', () => {
+    for (const id of ['c1', 'c2', 'c3', 'c9', 'c10', 'c42', 'c99']) {
+      expect(AgentId.parse(id)).toBe(id);
+    }
   });
 
-  it('rechaza un agente desconocido', () => {
-    expect(() => AgentId.parse('c9')).toThrow();
+  // El regex no es cosmetico: el gateway construye `claude/${agent}/` para la
+  // rama y hace `agentUrls[agent]`. Un string libre ahi es inyeccion de path,
+  // que es justo la garantia que el enum daba gratis y hay que reponer.
+  it('rechaza formas que romperian el path o la rama', () => {
+    for (const malo of [
+      '',
+      'c0', // no hay slot cero
+      'c01', // cero a la izquierda: dos strings para el mismo slot
+      'c100', // fuera del rango de dos digitos
+      'c1/x',
+      '../c1',
+      'c1/../c2',
+      'c-1',
+      'C1', // mayuscula: otro string para el mismo slot
+      'c1 ',
+      'c1\n',
+      'gateway',
+      'c1;rm',
+    ]) {
+      expect(() => AgentId.parse(malo), `deberia rechazar ${JSON.stringify(malo)}`).toThrow();
+    }
   });
 });
 
@@ -74,8 +97,8 @@ describe('ApprovalRequest', () => {
     expect(ApprovalRequest.safeParse({ ...base, summary: '' }).success).toBe(false);
   });
 
-  it('rechaza un agente que no existe', () => {
-    expect(ApprovalRequest.safeParse({ ...base, agent: 'c9' }).success).toBe(false);
+  it('rechaza un agente con forma invalida', () => {
+    expect(ApprovalRequest.safeParse({ ...base, agent: 'c1/../c2' }).success).toBe(false);
   });
 });
 
@@ -151,8 +174,8 @@ describe('RunRequest', () => {
     expect(RunRequest.safeParse({ ...base, tarea: '' }).success).toBe(false);
   });
 
-  it('rechaza un agente que no existe', () => {
-    expect(RunRequest.safeParse({ ...base, agent: 'c9' }).success).toBe(false);
+  it('rechaza un agente con forma invalida', () => {
+    expect(RunRequest.safeParse({ ...base, agent: 'c1/../c2' }).success).toBe(false);
   });
 });
 
