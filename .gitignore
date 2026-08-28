@@ -1,3 +1,12 @@
 node_modules/
-dist/
 *.tsbuildinfo
+
+# dist/ NO se ignora, y es a proposito. Este paquete se consume por git, y una
+# dependencia de git solo compila si corre su script `prepare` — que pnpm
+# bloquea por defecto y solo se habilita listando el HASH del commit en
+# allowBuilds, o sea editando esa lista en cada bump de version.
+#
+# Commitear el build sale mas barato: el consumidor clona y ya tiene los .js y
+# los .d.ts, sin scripts de instalacion y sin necesitar TypeScript en la imagen.
+# El costo es acordarse de `pnpm build` antes de taggear; el CHANGELOG del
+# README lo dice y el tag sin dist se nota en el primer install.

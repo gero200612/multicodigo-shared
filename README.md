@@ -20,9 +20,11 @@ No por npm: por **git**, apuntando a un tag de este repo.
 "@multicodigo/shared": "github:gero200612/multicodigo-shared#v0.1.0"
 ```
 
-pnpm clona el repo en el tag pedido y corre el script `prepare`, que compila
-`dist/`. Por eso `prepare` existe y no alcanza con `build`: es el unico hook que
-pnpm ejecuta al instalar una dependencia de git.
+pnpm clona el repo en el tag pedido y usa lo que encuentra. Por eso **`dist/`
+esta commiteado**: la alternativa era un script `prepare` que compile al
+instalar, y pnpm bloquea los scripts de instalacion salvo que se liste el HASH
+del commit en `allowBuilds` — o sea, editar esa lista en cada bump. Commitear el
+build sale mas barato y ademas no obliga a tener TypeScript en las imagenes.
 
 **Por que git y no npm.** npm exige 2FA para publicar y el scope `@multicodigo`
 necesitaria una organizacion. Con git no hace falta ninguna de las dos cosas, el
@@ -41,8 +43,9 @@ Este paquete es la unica cosa que garantiza que las dos puntas de una llamada
 esten de acuerdo. Cuando antes era un cambio en un commit, ahora son tres pasos
 y hay que hacer los tres:
 
-1. Aca: el cambio, `pnpm test`, subir la `version` en `package.json`, commit, y
-   **un tag nuevo** (`git tag v0.2.0 && git push --tags`).
+1. Aca: el cambio, `pnpm test`, **`pnpm build`** (dist/ va commiteado), subir la
+   `version` en `package.json`, commit, y un tag nuevo
+   (`git tag v0.2.0 && git push --tags`).
 2. En `multicodigo-vm`: apuntar la dependencia al tag nuevo, `pnpm install`,
    correr los tests.
 3. En `multicodigo-back/bridge`: lo mismo.

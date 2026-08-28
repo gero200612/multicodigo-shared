@@ -1,6 +1,6 @@
 {
   "name": "@multicodigo/shared",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "El contrato entre los servicios de MultiCodigo: schemas de zod, bearer y sanitizado.",
   "license": "MIT",
   "repository": {
@@ -29,8 +29,7 @@
     "build": "tsc -b",
     "test": "vitest run",
     "typecheck": "tsc -b",
-    "prepublishOnly": "tsc -b --force",
-    "prepare": "tsc -b"
+    "prepublishOnly": "tsc -b --force"
   },
   "dependencies": {
     "zod": "^3.23.0"
