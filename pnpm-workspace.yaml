@@ -1,0 +1,5 @@
+# Un solo paquete, pero el archivo hace falta igual: desde pnpm 10 la lista de
+# scripts de instalacion permitidos vive aca y no en package.json. Sin esto,
+# esbuild (que usa vitest) queda sin construir y el install falla.
+allowBuilds:
+  esbuild: true
