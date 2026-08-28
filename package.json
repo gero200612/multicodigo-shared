@@ -29,7 +29,8 @@
     "build": "tsc -b",
     "test": "vitest run",
     "typecheck": "tsc -b",
-    "prepublishOnly": "tsc -b --force"
+    "prepublishOnly": "tsc -b --force",
+    "prepare": "tsc -b"
   },
   "dependencies": {
     "zod": "^3.23.0"
