@@ -169,31 +169,46 @@ export declare const PendingApprovalsResponse: z.ZodObject<{
     }[];
 }>;
 export type PendingApprovalsResponse = z.infer<typeof PendingApprovalsResponse>;
+/**
+ * El nombre de un repo dentro de un proyecto.
+ *
+ * Lista blanca de FORMA y no lista negra de nombres, por la misma razon que
+ * `isBranchAllowed`: este valor arma una ruta en disco, asi que `..`, la barra
+ * y cualquier metacaracter caen todos por el mismo lado, junto con el nombre
+ * raro que nadie penso.
+ */
+export declare const NombreDeRepo: z.ZodEffects<z.ZodString, string, string>;
 export declare const GitCommitRequest: z.ZodObject<{
     agent: z.ZodString;
     project: z.ZodString;
+    repo: z.ZodEffects<z.ZodString, string, string>;
     message: z.ZodString;
 }, "strip", z.ZodTypeAny, {
     message: string;
     agent: string;
     project: string;
+    repo: string;
 }, {
     message: string;
     agent: string;
     project: string;
+    repo: string;
 }>;
 export type GitCommitRequest = z.infer<typeof GitCommitRequest>;
 export declare const GitPushRequest: z.ZodObject<{
     agent: z.ZodString;
     project: z.ZodString;
+    repo: z.ZodEffects<z.ZodString, string, string>;
     branch: z.ZodString;
 }, "strip", z.ZodTypeAny, {
     agent: string;
     project: string;
+    repo: string;
     branch: string;
 }, {
     agent: string;
     project: string;
+    repo: string;
     branch: string;
 }>;
 export type GitPushRequest = z.infer<typeof GitPushRequest>;
@@ -219,14 +234,17 @@ export type GitResult = z.infer<typeof GitResult>;
 export declare const RunRequest: z.ZodObject<{
     agent: z.ZodString;
     project: z.ZodString;
+    repo: z.ZodEffects<z.ZodString, string, string>;
     tarea: z.ZodString;
 }, "strict", z.ZodTypeAny, {
     agent: string;
     project: string;
+    repo: string;
     tarea: string;
 }, {
     agent: string;
     project: string;
+    repo: string;
     tarea: string;
 }>;
 export type RunRequest = z.infer<typeof RunRequest>;

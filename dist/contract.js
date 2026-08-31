@@ -84,14 +84,30 @@ export const ApprovalDecision = z.object({
 export const PendingApprovalsResponse = z.object({
     pending: z.array(ApprovalRequest),
 });
+/**
+ * El nombre de un repo dentro de un proyecto.
+ *
+ * Lista blanca de FORMA y no lista negra de nombres, por la misma razon que
+ * `isBranchAllowed`: este valor arma una ruta en disco, asi que `..`, la barra
+ * y cualquier metacaracter caen todos por el mismo lado, junto con el nombre
+ * raro que nadie penso.
+ */
+export const NombreDeRepo = z
+    .string()
+    .min(1)
+    .max(100)
+    .regex(/^[A-Za-z0-9._-]+$/, 'nombre de repo invalido')
+    .refine((n) => n !== '.' && n !== '..', { message: 'nombre de repo invalido' });
 export const GitCommitRequest = z.object({
     agent: AgentId,
     project: z.string().min(1),
+    repo: NombreDeRepo,
     message: z.string().min(1),
 });
 export const GitPushRequest = z.object({
     agent: AgentId,
     project: z.string().min(1),
+    repo: NombreDeRepo,
     branch: z.string().min(1),
 });
 export const GitResult = z.object({
@@ -110,6 +126,7 @@ export const RunRequest = z
     .object({
     agent: AgentId,
     project: z.string().min(1),
+    repo: NombreDeRepo,
     tarea: z.string().min(1),
 })
     .strict();
