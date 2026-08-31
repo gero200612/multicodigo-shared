@@ -1,6 +1,6 @@
 {
   "name": "@multicodigo/shared",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "El contrato entre los servicios de MultiCodigo: schemas de zod, bearer y sanitizado.",
   "license": "MIT",
   "repository": {
