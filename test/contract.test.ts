@@ -125,18 +125,47 @@ describe('PendingApprovalsResponse', () => {
 
 describe('GitPushRequest', () => {
   it('acepta un push a una branch del agente', () => {
-    const r = GitPushRequest.parse({ agent: 'c1', project: 'demo', branch: 'claude/c1/lotes' });
+    const r = GitPushRequest.parse({
+      agent: 'c1', project: 'demo', repo: 'demo', branch: 'claude/c1/lotes',
+    });
     expect(r.branch).toBe('claude/c1/lotes');
   });
 
   it('rechaza una branch vacia', () => {
-    expect(GitPushRequest.safeParse({ agent: 'c1', project: 'demo', branch: '' }).success).toBe(false);
+    expect(
+      GitPushRequest.safeParse({ agent: 'c1', project: 'demo', repo: 'demo', branch: '' }).success,
+    ).toBe(false);
   });
 });
 
 describe('GitCommitRequest', () => {
   it('rechaza un mensaje de commit vacio', () => {
-    expect(GitCommitRequest.safeParse({ agent: 'c1', project: 'demo', message: '' }).success).toBe(false);
+    expect(
+      GitCommitRequest.safeParse({ agent: 'c1', project: 'demo', repo: 'demo', message: '' })
+        .success,
+    ).toBe(false);
+  });
+
+  it('rechaza un commit sin repo', () => {
+    expect(
+      GitCommitRequest.safeParse({ agent: 'c1', project: 'multicodigo', message: 'x' }).success,
+    ).toBe(false);
+  });
+
+  it('rechaza un repo con barra, que se escaparia del directorio', () => {
+    expect(
+      GitCommitRequest.safeParse({
+        agent: 'c1', project: 'multicodigo', repo: '../otro', message: 'x',
+      }).success,
+    ).toBe(false);
+  });
+
+  it('acepta un nombre de repo normal', () => {
+    expect(
+      GitCommitRequest.safeParse({
+        agent: 'c1', project: 'multicodigo', repo: 'multicodigo-front', message: 'x',
+      }).success,
+    ).toBe(true);
   });
 });
 
@@ -157,7 +186,7 @@ describe('AgentErrorCode', () => {
 import { RunRequest, RunResponse } from '../src/contract.js';
 
 describe('RunRequest', () => {
-  const base = { agent: 'c1', project: 'demo', tarea: 'test' };
+  const base = { agent: 'c1', project: 'demo', repo: 'demo', tarea: 'test' };
 
   it('acepta un pedido de tarea', () => {
     expect(RunRequest.parse(base).tarea).toBe('test');
