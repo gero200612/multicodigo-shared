@@ -19,24 +19,74 @@ import { z } from 'zod';
  */
 export declare const AgentId: z.ZodString;
 export type AgentId = z.infer<typeof AgentId>;
+/**
+ * El nombre de un repo dentro de un proyecto.
+ *
+ * Lista blanca de FORMA y no lista negra de nombres, por la misma razon que
+ * `isBranchAllowed`: este valor arma una ruta en disco, asi que `..`, la barra
+ * y cualquier metacaracter caen todos por el mismo lado, junto con el nombre
+ * raro que nadie penso.
+ */
+export declare const NombreDeRepo: z.ZodEffects<z.ZodString, string, string>;
+/**
+ * Un repo tal como se lo pasan al gateway en el turno.
+ *
+ * El gateway no habla con Supabase: todo lo que necesita saber llega en el
+ * pedido. `github_repo` esta para poder clonar el espejo la primera vez, y se
+ * valida la FORMA `owner/name` en vez de una URL entera porque una URL admite
+ * `ssh://...@host/-oProxyCommand=...`, que git interpreta como opciones.
+ */
+export declare const RepoDelPedido: z.ZodObject<{
+    nombre: z.ZodEffects<z.ZodString, string, string>;
+    github_repo: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    nombre: string;
+    github_repo: string;
+}, {
+    nombre: string;
+    github_repo: string;
+}>;
+export type RepoDelPedido = z.infer<typeof RepoDelPedido>;
 export declare const PromptRequest: z.ZodObject<{
     jobId: z.ZodString;
     agent: z.ZodString;
     project: z.ZodString;
     prompt: z.ZodString;
     sessionId: z.ZodOptional<z.ZodString>;
+    /**
+     * Los repos del proyecto. Opcional: sin esto el gateway usa su catalogo
+     * local, que es lo que mantiene vivo a `demo` fuera de Supabase.
+     */
+    repos: z.ZodOptional<z.ZodArray<z.ZodObject<{
+        nombre: z.ZodEffects<z.ZodString, string, string>;
+        github_repo: z.ZodString;
+    }, "strip", z.ZodTypeAny, {
+        nombre: string;
+        github_repo: string;
+    }, {
+        nombre: string;
+        github_repo: string;
+    }>, "many">>;
 }, "strip", z.ZodTypeAny, {
     jobId: string;
     agent: string;
     project: string;
     prompt: string;
     sessionId?: string | undefined;
+    repos?: {
+        nombre: string;
+        github_repo: string;
+    }[] | undefined;
 }, {
     jobId: string;
     agent: string;
     project: string;
     prompt: string;
     sessionId?: string | undefined;
+    repos?: {
+        nombre: string;
+        github_repo: string;
+    }[] | undefined;
 }>;
 export type PromptRequest = z.infer<typeof PromptRequest>;
 export declare const PromptResponse: z.ZodObject<{
@@ -169,15 +219,6 @@ export declare const PendingApprovalsResponse: z.ZodObject<{
     }[];
 }>;
 export type PendingApprovalsResponse = z.infer<typeof PendingApprovalsResponse>;
-/**
- * El nombre de un repo dentro de un proyecto.
- *
- * Lista blanca de FORMA y no lista negra de nombres, por la misma razon que
- * `isBranchAllowed`: este valor arma una ruta en disco, asi que `..`, la barra
- * y cualquier metacaracter caen todos por el mismo lado, junto con el nombre
- * raro que nadie penso.
- */
-export declare const NombreDeRepo: z.ZodEffects<z.ZodString, string, string>;
 export declare const GitCommitRequest: z.ZodObject<{
     agent: z.ZodString;
     project: z.ZodString;

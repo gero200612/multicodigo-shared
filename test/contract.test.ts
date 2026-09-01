@@ -231,3 +231,44 @@ describe('AgentErrorCode — plan 3', () => {
     }
   });
 });
+
+describe('PromptRequest con repos', () => {
+  const base = {
+    jobId: '00000000-0000-4000-8000-000000000001',
+    agent: 'c1',
+    project: 'multicodigo',
+    prompt: 'hola',
+  };
+
+  // El gateway cae a su catalogo local (projects.json) cuando no vienen: es lo
+  // que mantiene vivo a `demo`, que no esta en Supabase.
+  it('acepta un pedido sin repos', () => {
+    expect(PromptRequest.safeParse(base).success).toBe(true);
+  });
+
+  it('acepta la lista de repos del proyecto', () => {
+    const r = PromptRequest.safeParse({
+      ...base,
+      repos: [{ nombre: 'multicodigo-front', github_repo: 'gero200612/multicodigo-front' }],
+    });
+    expect(r.success).toBe(true);
+  });
+
+  it('rechaza un nombre de repo que se escaparia del directorio', () => {
+    const r = PromptRequest.safeParse({
+      ...base,
+      repos: [{ nombre: '../otro', github_repo: 'gero200612/otro' }],
+    });
+    expect(r.success).toBe(false);
+  });
+
+  // Una URL entera admite `ssh://...@host/-oProxyCommand=...`, que git
+  // interpreta como opciones. Por eso se guarda y valida la forma corta.
+  it('rechaza un github_repo que no es owner/name', () => {
+    const r = PromptRequest.safeParse({
+      ...base,
+      repos: [{ nombre: 'x', github_repo: 'https://github.com/a/b' }],
+    });
+    expect(r.success).toBe(false);
+  });
+});

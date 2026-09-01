@@ -18,12 +18,45 @@ import { z } from 'zod';
  * digitos porque el limite real es la RAM del host, no el nombre.
  */
 export const AgentId = z.string().regex(/^c[1-9][0-9]?$/, 'slot invalido');
+/**
+ * El nombre de un repo dentro de un proyecto.
+ *
+ * Lista blanca de FORMA y no lista negra de nombres, por la misma razon que
+ * `isBranchAllowed`: este valor arma una ruta en disco, asi que `..`, la barra
+ * y cualquier metacaracter caen todos por el mismo lado, junto con el nombre
+ * raro que nadie penso.
+ */
+export const NombreDeRepo = z
+    .string()
+    .min(1)
+    .max(100)
+    .regex(/^[A-Za-z0-9._-]+$/, 'nombre de repo invalido')
+    .refine((n) => n !== '.' && n !== '..', { message: 'nombre de repo invalido' });
+/**
+ * Un repo tal como se lo pasan al gateway en el turno.
+ *
+ * El gateway no habla con Supabase: todo lo que necesita saber llega en el
+ * pedido. `github_repo` esta para poder clonar el espejo la primera vez, y se
+ * valida la FORMA `owner/name` en vez de una URL entera porque una URL admite
+ * `ssh://...@host/-oProxyCommand=...`, que git interpreta como opciones.
+ */
+export const RepoDelPedido = z.object({
+    nombre: NombreDeRepo,
+    github_repo: z
+        .string()
+        .regex(/^[A-Za-z0-9._-]+\/[A-Za-z0-9._-]+$/, 'github_repo tiene que ser owner/name'),
+});
 export const PromptRequest = z.object({
     jobId: z.string().uuid(),
     agent: AgentId,
     project: z.string().min(1),
     prompt: z.string().min(1),
     sessionId: z.string().min(1).optional(),
+    /**
+     * Los repos del proyecto. Opcional: sin esto el gateway usa su catalogo
+     * local, que es lo que mantiene vivo a `demo` fuera de Supabase.
+     */
+    repos: z.array(RepoDelPedido).max(20).optional(),
 });
 export const PromptResponse = z.object({
     jobId: z.string().uuid(),
@@ -84,20 +117,6 @@ export const ApprovalDecision = z.object({
 export const PendingApprovalsResponse = z.object({
     pending: z.array(ApprovalRequest),
 });
-/**
- * El nombre de un repo dentro de un proyecto.
- *
- * Lista blanca de FORMA y no lista negra de nombres, por la misma razon que
- * `isBranchAllowed`: este valor arma una ruta en disco, asi que `..`, la barra
- * y cualquier metacaracter caen todos por el mismo lado, junto con el nombre
- * raro que nadie penso.
- */
-export const NombreDeRepo = z
-    .string()
-    .min(1)
-    .max(100)
-    .regex(/^[A-Za-z0-9._-]+$/, 'nombre de repo invalido')
-    .refine((n) => n !== '.' && n !== '..', { message: 'nombre de repo invalido' });
 export const GitCommitRequest = z.object({
     agent: AgentId,
     project: z.string().min(1),
