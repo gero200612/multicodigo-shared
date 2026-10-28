@@ -26,6 +26,22 @@ describe('esAvisoDeLimite', () => {
     expect(esAvisoDeLimite('Your weekly allowance is spent · resets 9:00am (UTC)')).toBe(true);
   });
 
+  it('reconoce los carteles de sesion y semanales', () => {
+    // Redacciones nuevas de Claude: otro separador (∙, no ·) y, en el semanal,
+    // una fecha despues de "resets" en vez de una hora. Ninguna caia y no
+    // habia relevo al quedarse sin tokens.
+    for (const t of [
+      'Session limit reached ∙ resets 3pm',
+      '5-hour limit reached ∙ resets 9pm (UTC)',
+      'Weekly limit reached ∙ resets Oct 30, 4pm (UTC)',
+      'Opus weekly limit reached ∙ resets Nov 2 at 10am',
+      'Claude AI usage limit reached|1761660000',
+      'Your weekly allowance is spent ∙ resets Oct 30, 4pm',
+    ]) {
+      expect(esAvisoDeLimite(t), t).toBe(true);
+    }
+  });
+
   it('NO confunde una respuesta de trabajo que habla de limites', () => {
     // El falso positivo es el error caro: cambia de slot cuando el agente
     // estaba contestando bien. El agente programa, y esto es prosa normal.
@@ -33,7 +49,7 @@ describe('esAvisoDeLimite', () => {
       'Agregue un rate limit al endpoint de login, en src/api/login.ts:44.',
       'El limite de 20 MB esta declarado en dos lugares y explico por que.',
       'Revise el codigo: no encontre nada que resetea el contador de usage.',
-    ]) {
+      'Rate limit reached handling: agregue un reintento con espera en el cliente.',    ]) {
       expect(esAvisoDeLimite(t), t).toBe(false);
     }
   });
@@ -58,6 +74,10 @@ describe('esAvisoDeLimite', () => {
 describe('horaDeReset', () => {
   it('saca la hora del cartel', () => {
     expect(horaDeReset("You're out of extra usage · resets 1:30am (UTC)")).toBe('1:30am (UTC)');
+  });
+
+  it('saca la fecha del cartel semanal', () => {
+    expect(horaDeReset('Weekly limit reached ∙ resets Oct 30, 4pm (UTC)')).toBe('Oct 30, 4pm (UTC)');
   });
 
   it('devuelve undefined cuando el aviso no la trae', () => {

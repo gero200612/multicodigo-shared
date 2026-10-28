@@ -47,11 +47,17 @@ export function esAvisoDeLimite(texto: string): boolean {
     // La que faltaba, vista en produccion. El saldo extra es otra bolsa que la
     // ventana de uso, y se agota con su propio cartel.
     /^you'?re out of (extra )?usage/.test(t) ||
-    /^you have run out of (extra )?usage/.test(t);
+    /^you have run out of (extra )?usage/.test(t) ||
+    // "Session limit reached ∙ …", "Weekly limit reached ∙ …", "Claude AI usage
+    // limit reached|<epoch>". Tiene que seguir un separador o el final: "rate
+    // limit reached handling: …" es prosa de trabajo.
+    /^[a-z0-9 -]{0,30}limit reached\s*($|[·∙•|\-—])/.test(t);
 
   // El tope de largo es lo que separa "el cartel" de "una respuesta que
-  // casualmente lo cita". El cartel es una linea.
-  const porForma = t.length <= LARGO_DEL_CARTEL && /[·\-—]\s*resets\s+\d/.test(t);
+  // casualmente lo cita". El cartel es una linea. Despues de "resets" viene la
+  // hora ("3pm") o, en el semanal, la fecha ("Oct 30, 4pm").
+  const porForma =
+    t.length <= LARGO_DEL_CARTEL && /[·∙•\-—]\s*resets\s+(\d|[a-z]{3,9}\.? \d)/.test(t);
 
   return porFrase || porForma;
 }
